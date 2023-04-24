@@ -12,14 +12,15 @@ from pybricks.tools import wait
 from pybricks.robotics import DriveBase
 
 # Initialize ports.
-motorL = None
-motorR = None
-colorSenEv3 = None
-colorSenNXT = None
-infraredSen = None
-ultrasonicSen = None
-wheel_diameter_ = None
-tableEnd = None
+motorL = Port.C
+motorR = Port.D
+colorSenEv3 = Port.S4
+# colorSenNXT = Port.S3
+infraredSen = Port.S3
+ultrasonicSen = Port.S1
+wheel_diameter_ = 55.5
+towerDistance = 130
+tableEnd = 150
 
 ev3 = EV3Brick()
 
@@ -29,7 +30,7 @@ right_motor = Motor(motorR)
 
 # Initialize the color sensors.
 line_sensor = ColorSensor(colorSenEv3)
-tower_sensor = ColorSensorNXT(colorSenNXT)
+# tower_sensor = ColorSensorNXT(colorSenNXT)
 
 # Initialize the distance sensors.
 infrared = InfraredSensor(infraredSen)
@@ -40,7 +41,7 @@ robot = DriveBase(left_motor, right_motor, wheel_diameter=wheel_diameter_, axle_
 
 # Calculate the light threshold. CALIBRATION NEEDED!
 BLACK = 9
-WHITE = 85
+WHITE = 35
 threshold = (BLACK + WHITE) / 2
 
 # Set the drive speed at 100 millimeters per second.
@@ -52,17 +53,26 @@ DRIVE_SPEED = 100
 
 # For example, if the light value deviates from the threshold by 10, the robot
 # steers at 10*1.2 = 12 degrees per second.
-PROPORTIONAL_GAIN = 1.2
+PROPORTIONAL_GAIN = 7
 
-# Start following the line endlessly.
+# Start following the lie endlessly.
 while True:
     # Check if the robot is not near table end
-    if infrared.distance() <= tableEnd:
-        DRIVE_SPEED = 0
-    
-    #Check if the robot drove through the gate
-    if tower_sensor.color == Color.RED or tower_sensor.color == Color.BLUE:
+    if  infrared.distance() >= 22:
+        robot.drive(0, 0)
+        ev3.screen.print(ultrasonic.distance())
         ev3.speaker.beep()
+        wait(50000)
+    elif ultrasonic.distance() <= towerDistance:
+        while line_sensor.reflection() > 13:
+            robot.drive(10, 180)
+            wait(150)
+            robot.drive(DRIVE_SPEED, 20)
+    else:
+        DRIVE_SPEED = 150
+    #Check if the robot drove through the gate
+    # if tower_sensor.color == Color.RED or tower_sensor.color == Color.BLUE:
+    #     ev3.speaker.beep()
 
     # Calculate the deviation from the threshold.
     deviation = line_sensor.reflection() - threshold
