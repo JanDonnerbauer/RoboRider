@@ -1,4 +1,4 @@
-from pybricks.parameters import Port
+from pybricks.parameters import Port, Color
 
 # Initialize ports.
 MOTOR_L_PORT        = Port.C
@@ -15,15 +15,18 @@ LINE_THRESHOLD      = (BLACK + WHITE) / 2
 
 # Speed and turn constants
 DRIVE_SPEED         = 100
-
+DRIVE_SPEED_SLOW         = DRIVE_SPEED/2
 RIGHT_TURN_CONSTANT = 70
 LEFT_TURN_CONSTANT  = -70
 
 # Others
 WHEEL_DIAMETER      = 55.5
 AXLE_TRACK          = 104
-OBSTACLE_DISTANCE   = 130
+OBSTACLE_DISTANCE   = 70
+OBSTACLE_DISTANCE_SMALL = 30
 TABLE_END           = 22
+COLOR_RIGHT         = Color.RED
+COLOR_LEFT          = Color.BLUE
 
 # Set the gain of the proportional line controller. This means that for every
 # percentage point of light deviating from the threshold, we set the turn
@@ -31,4 +34,4 @@ TABLE_END           = 22
 
 # For example, if the light value deviates from the threshold by 10, the robot
 # steers at 10*1.2 = 12 degrees per second.
-PROPORTIONAL_GAIN   = 7
+PROPORTIONAL_GAIN   = 4
