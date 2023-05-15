@@ -1,6 +1,7 @@
 #!/usr/bin/env pybricks-micropython
 
-
+from State import State;
+from Color import Color;
 from Constants import *
 from pybricks.tools import wait
 from pybricks.robotics import DriveBase
@@ -13,7 +14,7 @@ from pybricks.robotics import DriveBase
 
 class Robot(object):
     def __init__(self):
-        self.current_state = 'idle'
+        self.current_state = State.IDLE
         self.ev3 = EV3Brick()
 
         # Initialize the motors.
@@ -32,25 +33,24 @@ class Robot(object):
         self.drive_base = DriveBase(self.left_motor, self.right_motor, WHEEL_DIAMETER, AXLE_TRACK)
     
     def start(self):
-        self.current_state = 'follow_line'
+        self.current_state = State.FOLLOW_LINE
         self.run()
 
     # starts robot
     def run(self):
         while True:
-            if self.current_state == 'follow_line':
+            if self.current_state == State.FOLLOW_LINE
                 self.follow_line()
-            elif self.current_state == 'idle':
+            elif self.current_state == State.IDLE
                 self.idle()
 
             # wait for a short time
-            # TODO necessary?
             wait(10)
             print(self.current_state)
 
     # follows the line until obstacle reached or end of line
     def follow_line(self):
-        if self.current_state != 'follow_line':
+        if self.current_state != State.FOLLOW_LINE
             self.stop()
         
         # calculate the deviation from the threshold.
@@ -80,7 +80,7 @@ class Robot(object):
             elif color == COLOR_LEFT:
                 self.turn_right()
             else:
-                self.current_state = 'idle'
+                self.current_state = State.IDLE
                 self.check_for_obstacle()
 
         elif self.ultrasonic.distance() <= OBSTACLE_DISTANCE:
@@ -89,7 +89,6 @@ class Robot(object):
     
     def check_color(self):
         return self.tower_sensor.color()
-        print("check color")
 
     def check_end_of_line(self):
         # TODO
@@ -98,9 +97,7 @@ class Robot(object):
     
     def check_end_of_table(self):
         if self.infrared.distance() >= TABLE_END:
-            print('end of table')
             self.current_state = 'idle'
-            
             # debug output
             # self.ev3.screen.print(self.ultrasonic.distance())
             # self.ev3.speaker.beep()
@@ -108,15 +105,14 @@ class Robot(object):
     def turn(self, side):
 
         self.drive_base.straight(-OBSTACLE_DISTANCE)
-        #turn left on 100 degrees
+        # turn left on 100 degrees
         self.drive_base.turn(-100*side)
 
-        #looking for line
+        # looking for line
         while self.line_sensor.reflection() > BLACK+2:
             self.set_param_drive(DRIVE_SPEED, TURN_ANGLE*side)
         
-
-        #going straight for 7 cm
+        # going straight for 7 cm
         self.drive_base.straight(70)
 
         while self.line_sensor.reflection() > BLACK+2:
