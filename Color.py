@@ -1,3 +1,4 @@
+#!/usr/bin/env pybricks-micropython
 from enum import Enum
 
 class Color(Enum):

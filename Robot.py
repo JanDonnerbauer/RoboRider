@@ -1,7 +1,5 @@
 #!/usr/bin/env pybricks-micropython
 
-from State import State;
-from Color import Color;
 from Constants import *
 from pybricks.tools import wait
 from pybricks.robotics import DriveBase
@@ -14,7 +12,7 @@ from pybricks.robotics import DriveBase
 
 class Robot(object):
     def __init__(self):
-        self.current_state = State.IDLE
+        self.current_state = 'idle'
         self.ev3 = EV3Brick()
 
         # Initialize the motors.
@@ -33,15 +31,15 @@ class Robot(object):
         self.drive_base = DriveBase(self.left_motor, self.right_motor, WHEEL_DIAMETER, AXLE_TRACK)
     
     def start(self):
-        self.current_state = State.FOLLOW_LINE
+        self.current_state = 'follow_line'
         self.run()
 
     # starts robot
     def run(self):
         while True:
-            if self.current_state == State.FOLLOW_LINE
+            if self.current_state == 'follow_line':
                 self.follow_line()
-            elif self.current_state == State.IDLE
+            elif self.current_state == 'idle':
                 self.idle()
 
             # wait for a short time
@@ -50,7 +48,7 @@ class Robot(object):
 
     # follows the line until obstacle reached or end of line
     def follow_line(self):
-        if self.current_state != State.FOLLOW_LINE
+        if self.current_state != 'follow_line':
             self.stop()
         
         # calculate the deviation from the threshold.
@@ -66,7 +64,7 @@ class Robot(object):
         self.check_for_obstacle()
 
         # checks end of line
-        self.check_end_of_line()
+        # self.check_end_of_line()
 
         # checks for end of table
         self.check_end_of_table()
@@ -80,24 +78,33 @@ class Robot(object):
             elif color == COLOR_LEFT:
                 self.turn_right()
             else:
-                self.current_state = State.IDLE
+                self.current_state = 'idle'
+                self.idle()
+                while color != COLOR_LEFT and color != COLOR_RIGHT:
+                    color = self.check_color()
+                    print('color = ', color)
+                self.current_state = 'follow_line'
+                self.reset_drive_speed()
                 self.check_for_obstacle()
 
-        elif self.ultrasonic.distance() <= OBSTACLE_DISTANCE:
+        elif self.ultrasonic.distance() <= OBSTACLE_DISTANCE and self.current_state != 'idle':
             self.set_drive_speed(DRIVE_SPEED_SLOW)
 
     
     def check_color(self):
         return self.tower_sensor.color()
 
-    def check_end_of_line(self):
-        # TODO
-        # print("turns left")
-        pass
-    
+    # def check_end_of_line(self):
+    #     # TODO
+    #     if self.line_sensor.reflection() in range(WHITE-10, WHITE+10):
+    #         self.idle()
+    #         print('end of line')
+    #         self.current_state = 'idle'
+     
     def check_end_of_table(self):
         if self.infrared.distance() >= TABLE_END:
             self.current_state = 'idle'
+            print('end of table')
             # debug output
             # self.ev3.screen.print(self.ultrasonic.distance())
             # self.ev3.speaker.beep()
@@ -106,11 +113,15 @@ class Robot(object):
 
         self.drive_base.straight(-OBSTACLE_DISTANCE)
         # turn left on 100 degrees
-        self.drive_base.turn(-100*side)
+        self.drive_base.turn(-110*side)
 
         # looking for line
         while self.line_sensor.reflection() > BLACK+2:
-            self.set_param_drive(DRIVE_SPEED, TURN_ANGLE*side)
+            while self.ultrasonic.distance() <= 100:
+                self.idle()
+            self.current_state = 'follow_line'
+            self.set_param_drive(DRIVE_SPEED+50, TURN_ANGLE*side)
+
         
         # going straight for 7 cm
         self.drive_base.straight(70)
@@ -141,7 +152,7 @@ class Robot(object):
         turn_rate = PROPORTIONAL_GAIN * deviation
 
         # set the drive base speed and turn rate.
-        self.drive_base.drive(DRIVE_SPEED, turn_rate)
+        self.drive_base.drive(drive_speed, turn_rate)
 
     def set_turn_rate(self, turn_rate):
         self.drive_base.drive(DRIVE_SPEED, turn_rate)
