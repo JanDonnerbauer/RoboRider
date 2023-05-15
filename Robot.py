@@ -46,6 +46,7 @@ class Robot(object):
             # wait for a short time
             # TODO necessary?
             wait(10)
+            print(self.current_state)
 
     # follows the line until obstacle reached or end of line
     def follow_line(self):
@@ -69,6 +70,7 @@ class Robot(object):
 
         # checks for end of table
         self.check_end_of_table()
+        print()
 
     def check_for_obstacle(self):
         if self.ultrasonic.distance() <= OBSTACLE_DISTANCE_SMALL:
@@ -96,7 +98,9 @@ class Robot(object):
     
     def check_end_of_table(self):
         if self.infrared.distance() >= TABLE_END:
+            print('end of table')
             self.current_state = 'idle'
+            
             # debug output
             # self.ev3.screen.print(self.ultrasonic.distance())
             # self.ev3.speaker.beep()
@@ -135,7 +139,13 @@ class Robot(object):
         self.set_drive_speed(DRIVE_SPEED)
         
     def set_drive_speed(self, drive_speed):
-        self.drive_base.drive(drive_speed, self.drive_base.state()[2])
+        deviation = self.line_sensor.reflection() - LINE_THRESHOLD
+
+        # calculate the turn rate.
+        turn_rate = PROPORTIONAL_GAIN * deviation
+
+        # set the drive base speed and turn rate.
+        self.drive_base.drive(DRIVE_SPEED, turn_rate)
 
     def set_turn_rate(self, turn_rate):
         self.drive_base.drive(DRIVE_SPEED, turn_rate)

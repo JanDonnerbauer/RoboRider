@@ -12,7 +12,7 @@ ULTRASONIC_PORT     = Port.S2
 
 # Calculate the light threshold. CALIBRATION NEEDED!
 BLACK               = 8
-WHITE               = 59
+WHITE               = 50
 LINE_THRESHOLD      = (BLACK + WHITE) / 2
 
 # Speed and turn constants
@@ -26,7 +26,7 @@ TURN_ANGLE          = 40
 WHEEL_DIAMETER      = 55.5
 AXLE_TRACK          = 104
 OBSTACLE_DISTANCE   = 70
-OBSTACLE_DISTANCE_SMALL = 30
+OBSTACLE_DISTANCE_SMALL = 35
 TABLE_END           = 22
 COLOR_RIGHT         = Color.RED
 COLOR_LEFT          = Color.BLUE
