@@ -12,11 +12,11 @@ ULTRASONIC_PORT     = Port.S2
 
 # Calculate the light threshold. CALIBRATION NEEDED!
 BLACK               = 8
-WHITE               = 70
-LINE_THRESHOLD      = (BLACK + WHITE) / 2 - 5 
+WHITE               = 65
+LINE_THRESHOLD      = (BLACK + WHITE) / 2 - 5
 
 # Speed and turn constants
-DRIVE_SPEED         = 150
+DRIVE_SPEED         = 120
 DRIVE_SPEED_SLOW         = DRIVE_SPEED/2
 RIGHT_TURN_CONSTANT = 70
 LEFT_TURN_CONSTANT  = -70
@@ -27,7 +27,7 @@ WHEEL_DIAMETER      = 55.5
 AXLE_TRACK          = 104
 OBSTACLE_DISTANCE   = 70
 OBSTACLE_DISTANCE_SMALL = 35
-TABLE_END           = 22
+TABLE_END           = 10
 COLOR_RIGHT         = Color.RED
 COLOR_LEFT          = Color.BLUE
 
@@ -37,4 +37,4 @@ COLOR_LEFT          = Color.BLUE
 
 # For example, if the light value deviates from the threshold by 10, the robot
 # steers at 10*1.2 = 12 degrees per second.
-PROPORTIONAL_GAIN   = 2
+PROPORTIONAL_GAIN   = 2.5

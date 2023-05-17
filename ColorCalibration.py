@@ -14,5 +14,6 @@ colorSen = ColorSensor(Port.S4)
 while True:
     reflection = colorSen.reflection()
     # distance = ultra.distance()
-    ev3.screen.print(reflection)
+    color = colorSen.color()
+    ev3.screen.print(reflection, '  ', color)
     wait(100)
