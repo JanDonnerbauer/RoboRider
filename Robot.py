@@ -28,6 +28,9 @@ class Robot(object):
         self.infrared = InfraredSensor(INFRARED_PORT)
         self.ultrasonic = UltrasonicSensor(ULTRASONIC_PORT)
 
+        self.WHITE = 0
+        self.BLACK = 0
+
         # Initialize the drive base.
         self.drive_base = DriveBase(self.left_motor, self.right_motor, WHEEL_DIAMETER, AXLE_TRACK)
 
@@ -40,16 +43,18 @@ class Robot(object):
         while self.ev3.buttons.pressed() == []:
             pass
         self.calibration()
-        while self.ev3.buttons.pressed() == []:
-            pass
-        if self.check_start_position() == True:
-            self.current_state = 'follow_line'
-            self.ev3.screen.clear()
-            self.ev3.speaker.say('LETS GO')
-            self.ev3.screen.print('LETS GO!')
-            self.run()
-        else:
-            self.start()
+        while True:	
+            while self.ev3.buttons.pressed() == []:	
+                pass	
+            if self.check_start_position() == True:	
+                self.current_state = 'follow_line'	
+                self.ev3.screen.clear()	
+                self.ev3.speaker.say('LETS GO')	
+                self.ev3.screen.print('LETS GO!')	
+                self.run()	
+                break	
+            else:	
+                self.ev3.screen.print('Invalid position')
             
     # starts robot
     def run(self):
@@ -81,6 +86,7 @@ class Robot(object):
 
         # checks end of line
         self.check_end_of_line()
+
 
         # checks for end of table
         self.check_end_of_table()
@@ -114,20 +120,21 @@ class Robot(object):
         return self.tower_sensor.color()
 
     def check_end_of_line(self):
-        if self.line_sensor.reflection() in range(WHITE-8, WHITE+10):
-            if self.end_of_line_counter <= 20:
+        print('end of line ', self.end_of_line_counter)
+        if self.line_sensor.reflection() in range(self.WHITE-8, self.WHITE+10):
+            if self.end_of_line_counter <= 30:
                 self.end_of_line_counter += 1
             else:
                 self.end_of_line_counter = 0
-                for i in range(0,10):
+                for i in range(0,7):
                     # making turns for 10 degrees until line is found
-                    if self.line_sensor.reflection() <= BLACK+3:
+                    if self.line_sensor.reflection() <= self.BLACK+3:
                         return
                     self.drive_base.turn(-11)
 
-                for i in range(0,12):
+                for i in range(0,11):
                     # making turns for 10 degrees until line is found
-                    if self.line_sensor.reflection() <= BLACK+3:
+                    if self.line_sensor.reflection() <= self.BLACK+3:
                         return
                     self.drive_base.turn(-10*-1)
                 self.current_state = 'idle'
@@ -146,14 +153,33 @@ class Robot(object):
             # self.ev3.screen.print(self.ultrasonic.distance())
             # self.ev3.speaker.beep()
     
+    # def turn(self, side):
+
+    #     self.drive_base.straight(-OBSTACLE_DISTANCE)
+    #     # turn left on 110 degrees
+    #     self.drive_base.turn(-110*side)
+
+    #     # looking for line
+    #     while self.line_sensor.reflection() > self.BLACK+2:
+    #         self.check_end_of_table()
+    #         while self.ultrasonic.distance() <= OBSTACLE_DISTANCE:
+    #             self.idle()
+    #         self.current_state = 'follow_line'
+    #         self.set_param_drive(DRIVE_SPEED+50, TURN_ANGLE*side)
+
+
+    #     # going straight for 7 cm
+    #     self.drive_base.straight(70)
+
+    #     while self.line_sensor.reflection() > self.BLACK+5:
+    #         # making turns for 10 degrees until line is found
+    #         self.drive_base.turn(-10*side)
+
     def turn(self, side):
 
-        self.drive_base.straight(-OBSTACLE_DISTANCE)
-        # turn left on 110 degrees
-        self.drive_base.turn(-110*side)
 
         # looking for line
-        while self.line_sensor.reflection() > BLACK+2:
+        while self.line_sensor.reflection() > self.BLACK+2:
             self.check_end_of_table()
             while self.ultrasonic.distance() <= OBSTACLE_DISTANCE:
                 self.idle()
@@ -164,18 +190,23 @@ class Robot(object):
         # going straight for 7 cm
         self.drive_base.straight(70)
 
-        while self.line_sensor.reflection() > BLACK+2:
+        while self.line_sensor.reflection() > self.BLACK+5:
             # making turns for 10 degrees until line is found
             self.drive_base.turn(-10*side)
 
 
     def turn_left(self):
+        self.drive_base.drive(-DRIVE_SPEED, -200)
+        wait(550)
         # making turn left, switching sides, by multiplying values by -1
-        self.turn(-1)
+        self.turn(1)
 
     def turn_right(self):
+        
+        self.drive_base.drive(-DRIVE_SPEED, 100)
+        wait(550)
         # making turn right, coefficient is 1 -> no changes
-        self.turn(1)
+        self.turn(-1)
 
     def idle(self):
         # TODO check for color again
@@ -200,7 +231,7 @@ class Robot(object):
         self.drive_base.drive(drive_speed, turn_rate)
 
     def check_start_position(self):
-        if self.line_sensor.reflection() not in range(BLACK-5, BLACK +5):
+        if self.line_sensor.reflection() not in range(self.BLACK-5, self.BLACK +5):
             self.current_state = 'idle'
             self.ev3.screen.print('Invalid position')
             self.idle()
@@ -211,15 +242,15 @@ class Robot(object):
     def calibration(self):
         while self.ev3.buttons.pressed() == []:
             pass
-        BLACK = self.line_sensor.reflection()
+        self.BLACK = self.line_sensor.reflection()
         self.ev3.screen.clear()
-        self.ev3.screen.print('black value = ', BLACK)
+        self.ev3.screen.print('black value = ', self.BLACK)
         wait(1000)
         self.drive_base.turn(30)
         wait(200)
-        WHITE = self.line_sensor.reflection()
+        self.WHITE = self.line_sensor.reflection()
         self.ev3.screen.clear()
-        self.ev3.screen.print('white value = ', WHITE)
+        self.ev3.screen.print('white value = ', self.WHITE)
         wait(1000)
         self.drive_base.turn(-30)
         self.ev3.screen.clear()
