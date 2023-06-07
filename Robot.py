@@ -15,6 +15,7 @@ class Robot(object):
     def __init__(self):
         self.current_state = 'idle'
         self.ev3 = EV3Brick()
+        self.side = 1
 
         # Initialize the motors.
         self.left_motor = Motor(MOTOR_L_PORT)
@@ -38,18 +39,13 @@ class Robot(object):
         self.end_of_line_counter = 0
     
     def start(self):
-        self.ev3.screen.print('Press middle ')
-        self.ev3.screen.print('button on black line')
-        while self.ev3.buttons.pressed() == []:
-            pass
-        self.calibration()
         while True:	
             while self.ev3.buttons.pressed() == []:	
                 pass	
             if self.check_start_position() == True:	
                 self.current_state = 'follow_line'	
                 self.ev3.screen.clear()	
-                self.ev3.speaker.say('LETS GO')	
+                # self.ev3.speaker.say('LETS GO')	
                 self.ev3.screen.print('LETS GO!')	
                 self.run()	
                 break	
@@ -79,7 +75,7 @@ class Robot(object):
         turn_rate = PROPORTIONAL_GAIN * deviation
 
         # set the drive base speed and turn rate.
-        self.drive_base.drive(DRIVE_SPEED, turn_rate)
+        self.drive_base.drive(DRIVE_SPEED, -turn_rate * self.side)
 
         # checks obstacle detected
         self.check_for_obstacle()
@@ -93,15 +89,19 @@ class Robot(object):
         print(self.infrared.distance())
 
     def check_for_obstacle(self):
+        global DRIVE_SPEED
         color = self.check_color()
         if self.ultrasonic.distance() <= OBSTACLE_DISTANCE_SMALL or color != None:
             color = self.check_color()
             if color == COLOR_RIGHT:
                 self.turn_left()
+                self.drive_base.straight(-20)
             elif color == COLOR_LEFT:
+                self.drive_base.straight(-20)
                 self.turn_right()
             else:
                 color = self.check_color()
+                self.drive_base.straight(-20)
                 while (color != COLOR_LEFT and color != COLOR_RIGHT and color != None) or self.ultrasonic.distance() <= OBSTACLE_DISTANCE_SMALL:
                     color = self.check_color()
                     self.current_state = 'idle'
@@ -113,7 +113,9 @@ class Robot(object):
                 
 
         elif self.ultrasonic.distance() <= OBSTACLE_DISTANCE and self.current_state != 'idle':
-            self.set_drive_speed(DRIVE_SPEED_SLOW)
+            global DRIVE_SPEED 
+            DRIVE_SPEED = DRIVE_SPEED_SLOW
+            self.set_drive_speed(DRIVE_SPEED)
 
     
     def check_color(self):
@@ -121,20 +123,20 @@ class Robot(object):
 
     def check_end_of_line(self):
         print('end of line ', self.end_of_line_counter)
-        if self.line_sensor.reflection() in range(self.WHITE-8, self.WHITE+10):
-            if self.end_of_line_counter <= 30:
+        if self.line_sensor.reflection() in range(WHITE-8, WHITE+10):
+            if self.end_of_line_counter <= 50:
                 self.end_of_line_counter += 1
             else:
                 self.end_of_line_counter = 0
-                for i in range(0,7):
+                for i in range(0,5):
                     # making turns for 10 degrees until line is found
-                    if self.line_sensor.reflection() <= self.BLACK+3:
+                    if self.line_sensor.reflection() <= BLACK+7:
                         return
-                    self.drive_base.turn(-11)
+                    self.drive_base.turn(-10)
 
                 for i in range(0,11):
                     # making turns for 10 degrees until line is found
-                    if self.line_sensor.reflection() <= self.BLACK+3:
+                    if self.line_sensor.reflection() <= BLACK+7:
                         return
                     self.drive_base.turn(-10*-1)
                 self.current_state = 'idle'
@@ -146,6 +148,8 @@ class Robot(object):
      
     def check_end_of_table(self):
         if self.infrared.distance() >= TABLE_END:
+            self.drive_base.straight(-50)
+            wait(1000)
             self.current_state = 'idle'
             self.idle()
             print('end of table')
@@ -153,11 +157,42 @@ class Robot(object):
             # self.ev3.screen.print(self.ultrasonic.distance())
             # self.ev3.speaker.beep()
     
+    def turn(self, side):
+        global DRIVE_SPEED
+
+        DRIVE_SPEED = DRIVE_SPEED_NORMAL
+        self.set_param_drive(-DRIVE_SPEED, 250*-side)
+
+        wait(400)
+        self.set_param_drive(DRIVE_SPEED, 0)
+        wait(800)
+        # self.drive_base.straight(-OBSTACLE_DISTANCE_SMALL)
+        # # turn left on 110 degrees
+        # self.drive_base.turn(-100*side)
+
+        # looking for line
+        while self.line_sensor.reflection() > BLACK+2:
+            self.check_end_of_table()
+            while self.ultrasonic.distance() <= OBSTACLE_DISTANCE:
+                self.idle()
+            self.current_state = 'follow_line'
+            self.set_param_drive(240, TURN_ANGLE*side)
+
+        wait(100)
+        # going straight for 7 cm
+        # self.drive_base.straight(50)
+
+        # while self.line_sensor.reflection() > self.BLACK+5:
+        #     # making turns for 10 degrees until line is found
+        #     self.drive_base.turn(-10*side)
+
+        while self.line_sensor.reflection() > BLACK+2:
+            self.set_param_drive(DRIVE_SPEED_SLOW, 150*-side)
+        
+
+
     # def turn(self, side):
 
-    #     self.drive_base.straight(-OBSTACLE_DISTANCE)
-    #     # turn left on 110 degrees
-    #     self.drive_base.turn(-110*side)
 
     #     # looking for line
     #     while self.line_sensor.reflection() > self.BLACK+2:
@@ -175,38 +210,21 @@ class Robot(object):
     #         # making turns for 10 degrees until line is found
     #         self.drive_base.turn(-10*side)
 
-    def turn(self, side):
-
-
-        # looking for line
-        while self.line_sensor.reflection() > self.BLACK+2:
-            self.check_end_of_table()
-            while self.ultrasonic.distance() <= OBSTACLE_DISTANCE:
-                self.idle()
-            self.current_state = 'follow_line'
-            self.set_param_drive(DRIVE_SPEED+50, TURN_ANGLE*side)
-
-
-        # going straight for 7 cm
-        self.drive_base.straight(70)
-
-        while self.line_sensor.reflection() > self.BLACK+5:
-            # making turns for 10 degrees until line is found
-            self.drive_base.turn(-10*side)
-
 
     def turn_left(self):
-        self.drive_base.drive(-DRIVE_SPEED, -200)
-        wait(550)
+        # self.drive_base.drive(-DRIVE_SPEED, -200)
+        # wait(550)
         # making turn left, switching sides, by multiplying values by -1
         self.turn(1)
+        self.side = -1
 
     def turn_right(self):
         
-        self.drive_base.drive(-DRIVE_SPEED, 100)
-        wait(550)
+        # self.drive_base.drive(-DRIVE_SPEED, 100)
+        # wait(550)
         # making turn right, coefficient is 1 -> no changes
         self.turn(-1)
+        self.side = 1
 
     def idle(self):
         # TODO check for color again
@@ -222,7 +240,7 @@ class Robot(object):
         turn_rate = PROPORTIONAL_GAIN * deviation
 
         # set the drive base speed and turn rate.
-        self.drive_base.drive(drive_speed, turn_rate)
+        self.drive_base.drive(drive_speed, -turn_rate*self.side)
 
     def set_turn_rate(self, turn_rate):
         self.drive_base.drive(DRIVE_SPEED, turn_rate)
@@ -231,7 +249,7 @@ class Robot(object):
         self.drive_base.drive(drive_speed, turn_rate)
 
     def check_start_position(self):
-        if self.line_sensor.reflection() not in range(self.BLACK-5, self.BLACK +5):
+        if self.line_sensor.reflection() not in range(BLACK-5, BLACK +5):
             self.current_state = 'idle'
             self.ev3.screen.print('Invalid position')
             self.idle()
